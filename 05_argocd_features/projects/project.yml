@@ -6,10 +6,10 @@ metadata:
 spec:
   description: Project for frontend team apps   # Optional description
   sourceRepos:                 # Which Git repos are allowed for this Project
-    - https://github.com/<your-username>/argocd-demos.git
+    - https://github.com/Rahik-IF/argocd-demos.git
   destinations:                # Which clusters/namespaces apps in this Project can target
     - namespace: frontend
-      server: <added_argocd_cluster_server_url>  # Target cluster server url
+      server: https://192.168.64.7:33893 # Target cluster server url
   clusterResourceWhitelist:    # Which cluster-wide resources are allowed (e.g., CRDs)
     - group: "*"               # '*' means allow all groups
       kind: "*"                # '*' means allow all kinds
