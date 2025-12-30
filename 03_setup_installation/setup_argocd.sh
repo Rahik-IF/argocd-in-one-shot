@@ -79,8 +79,17 @@ then
     fi
 
     curl -sSL -o $BINARY https://github.com/argoproj/argo-cd/releases/latest/download/$BINARY
+    curl -sSL -o ${BINARY}.sha256 https://github.com/argoproj/argo-cd/releases/latest/download/${BINARY}.sha256
+
+    echo "🔒 Verifying checksum..."
+    sha256sum -c ${BINARY}.sha256 || {
+        echo "❌ Checksum verification failed!"
+        rm -f $BINARY ${BINARY}.sha256
+        exit 1
+    }
+
     sudo install -m 555 $BINARY /usr/local/bin/argocd
-    rm $BINARY
+    rm -f $BINARY ${BINARY}.sha256
 
     echo "✅ ArgoCD CLI installed successfully."
 else
