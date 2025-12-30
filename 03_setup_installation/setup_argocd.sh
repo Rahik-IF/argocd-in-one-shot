@@ -10,7 +10,7 @@ KIND_CONFIG="kind-config.yaml"
 NAMESPACE="argocd"
 
 # ---------------------------
-# Auto-detect host IP
+# Detect host IP automatically
 # ---------------------------
 HOST_IP=$(hostname -I | awk '{print $1}')
 echo "Detected host IP: $HOST_IP"
@@ -53,12 +53,27 @@ kubectl get nodes
 kubectl create namespace $NAMESPACE || echo "⚠️ Namespace $NAMESPACE already exists."
 
 # ---------------------------
-# Install ArgoCD using Helm
+# Install ArgoCD using Helm only
 # ---------------------------
 echo "🚀 Installing ArgoCD using Helm..."
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 helm upgrade --install argocd argo/argo-cd -n $NAMESPACE
+
+# ---------------------------
+# Install ArgoCD CLI (Ubuntu only)
+# ---------------------------
+echo "⏳ Checking if ArgoCD CLI is installed..."
+if ! command -v argocd &> /dev/null
+then
+    echo "🚀 Installing ArgoCD CLI (Ubuntu)..."
+    curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+    sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+    rm argocd-linux-amd64
+    echo "✅ ArgoCD CLI installed successfully."
+else
+    echo "✅ ArgoCD CLI already installed."
+fi
 
 # ---------------------------
 # Verify Installation
@@ -72,14 +87,17 @@ kubectl get svc -n $NAMESPACE
 # ---------------------------
 # Access Instructions
 # ---------------------------
+echo "🔑 Fetching ArgoCD initial admin password..."
+PASSWORD=$(kubectl get secret argocd-initial-admin-secret -n $NAMESPACE -o jsonpath="{.data.password}" | base64 -d)
+echo "$PASSWORD"
+
 echo ""
 echo "🌐 To access the ArgoCD UI, run:"
 echo "kubectl port-forward svc/argocd-server -n $NAMESPACE 8080:443 --address=0.0.0.0 &"
 echo "Then open: https://$HOST_IP:8080"
-echo "Login with username: admin and the password from the secret below:"
-echo ""
-echo "🔑 Initial password:"
-kubectl get secret argocd-initial-admin-secret -n $NAMESPACE -o jsonpath="{.data.password}" | base64 -d
-echo ""
+echo "Login with username: admin and the password above."
+echo "-----------------------------------------"
+echo "🔐 CLI Login Example:"
+echo "argocd login $HOST_IP:8080 --username admin --password $PASSWORD --insecure"
+echo "argocd account get-user-info" 
 echo "========================================="
-
