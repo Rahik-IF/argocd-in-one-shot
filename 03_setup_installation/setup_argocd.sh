@@ -23,7 +23,7 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 networking:
   apiServerAddress: "$HOST_IP"
-  apiServerPort: 6443
+  apiServerPort: 33893
 nodes:
   - role: control-plane
     image: kindest/node:v1.33.1
@@ -34,23 +34,14 @@ nodes:
 EOF
 
 # ---------------------------
-# Delete broken cluster if exists
-# ---------------------------
-if kind get clusters | grep -q $CLUSTER_NAME; then
-  echo "⚠️ Cluster $CLUSTER_NAME already exists. Deleting to avoid conflicts..."
-  kind delete cluster --name $CLUSTER_NAME
-fi
-
-# ---------------------------
 # Create Kind Cluster
 # ---------------------------
 echo "📦 Creating Kind cluster: $CLUSTER_NAME ..."
-kind create cluster --name $CLUSTER_NAME --config $KIND_CONFIG
-
-# ---------------------------
-# Export kubeconfig automatically
-# ---------------------------
-export KUBECONFIG=$(kind get kubeconfig --name $CLUSTER_NAME)
+if kind get clusters | grep -q $CLUSTER_NAME; then
+  echo "⚠️ Cluster $CLUSTER_NAME already exists. Skipping creation."
+else
+  kind create cluster --name $CLUSTER_NAME --config $KIND_CONFIG
+fi
 
 echo "✅ Kind cluster is ready."
 kubectl cluster-info
@@ -70,21 +61,6 @@ helm repo update
 helm upgrade --install argocd argo/argo-cd -n $NAMESPACE
 
 # ---------------------------
-# Install ArgoCD CLI (Ubuntu only)
-# ---------------------------
-echo "⏳ Checking if ArgoCD CLI is installed..."
-if ! command -v argocd &> /dev/null
-then
-    echo "🚀 Installing ArgoCD CLI (Ubuntu)..."
-    curl -sSL -o argocd-linux-arm64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-arm64
-    sudo install -m 555 argocd-linux-arm64 /usr/local/bin/argocd
-    rm argocd-linux-arm64
-    echo "✅ ArgoCD CLI installed successfully."
-else
-    echo "✅ ArgoCD CLI already installed."
-fi
-
-# ---------------------------
 # Verify Installation
 # ---------------------------
 echo "⏳ Waiting for ArgoCD server deployment..."
@@ -96,17 +72,14 @@ kubectl get svc -n $NAMESPACE
 # ---------------------------
 # Access Instructions
 # ---------------------------
-echo "🔑 Fetching ArgoCD initial admin password..."
-PASSWORD=$(kubectl get secret argocd-initial-admin-secret -n $NAMESPACE -o jsonpath="{.data.password}" | base64 -d)
-echo "$PASSWORD"
-
 echo ""
 echo "🌐 To access the ArgoCD UI, run:"
 echo "kubectl port-forward svc/argocd-server -n $NAMESPACE 8080:443 --address=0.0.0.0 &"
 echo "Then open: https://$HOST_IP:8080"
-echo "Login with username: admin and the password above."
-echo "-----------------------------------------"
-echo "🔐 CLI Login Example:"
-echo "argocd login $HOST_IP:8080 --username admin --password $PASSWORD --insecure"
-echo "argocd account get-user-info" 
+echo "Login with username: admin and the password from the secret below:"
+echo ""
+echo "🔑 Initial password:"
+kubectl get secret argocd-initial-admin-secret -n $NAMESPACE -o jsonpath="{.data.password}" | base64 -d
+echo ""
 echo "========================================="
+
