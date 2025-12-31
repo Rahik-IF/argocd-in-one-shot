@@ -129,7 +129,7 @@ Instead of using my image directly, you will **pull it and re-push it to your ow
 1. Log in to Docker Hub with your `username` and `DockerHub PAT`:
 
    ```bash
-   docker login
+   docker login -u rahik -p <your-dockerhub-pat>
    ```
 
 2. Pull my base image:
