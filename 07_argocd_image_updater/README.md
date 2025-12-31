@@ -135,7 +135,7 @@ Instead of using my image directly, you will **pull it and re-push it to your ow
 2. Pull my base image:
 
    ```bash
-   docker pull amitabhdevops/chai-devops:latest
+   docker pull rahik/my-web-app:latest
    ```
 
 3. Tag it with your own Docker Hub username:
