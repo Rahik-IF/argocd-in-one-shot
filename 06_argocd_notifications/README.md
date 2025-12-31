@@ -74,7 +74,7 @@ Use: [secret-smtp.yaml](secret-smtp.yaml)
 Apply it:
 
 ```bash
-kubectl apply -f secret-smtp.yaml
+kubectl apply -f secret-smtp.yaml -n argocd
 ```
 
 ![secret-configured](output_images/image-1.png)
